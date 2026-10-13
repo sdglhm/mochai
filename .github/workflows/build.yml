@@ -1,0 +1,44 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build MochAI
+        run: |
+          xcodebuild \
+            -project MochAI.xcodeproj \
+            -scheme MochAI \
+            -configuration Release \
+            -destination 'platform=macOS' \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=YES \
+            build
+
+      - name: Test
+        run: |
+          xcodebuild \
+            -project MochAI.xcodeproj \
+            -scheme MochAI \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGN_IDENTITY=- \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=YES \
+            test -only-testing:MochAITests
+
+      - name: Upload MochAI.app
+        uses: actions/upload-artifact@v4
+        with:
+          name: MochAI-macos
+          path: build/DerivedData/Build/Products/Release/MochAI.app
+          if-no-files-found: error
